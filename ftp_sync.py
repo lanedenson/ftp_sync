@@ -23,19 +23,16 @@ def load_config(config_path, section='ftp'):
     return ftp_conf
 
 def create_ftp_connection(host, port, username, password):
-    """Create and return a secured FTP_TLS connection that trusts self-signed certificates."""
-    # WARNING: This disables certificate verification - not secure for production.
-    # For a self-signed certificate scenario, this might be required.
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    context.check_hostname = False
-    context.verify_mode = ssl.CERT_NONE
+    """Connect using explicit FTPS and protect the data connection."""
+    context = ssl.create_default_context()
 
-    ftps = ftplib.FTP_TLS()
+    ftps = ftplib.FTP_TLS(context=context, timeout=60)
     ftps.connect(host, port)
-    ftps.auth()  # upgrade to secure control connection
-    ftps.prot_p()  # secure data connection
+    ftps.auth()
     ftps.login(username, password)
-    log.info("Connected!")
+    ftps.prot_p()
+
+    log.info("Connected securely using FTPS")
     return ftps
 
 def list_remote_files(ftps, remote_path):
